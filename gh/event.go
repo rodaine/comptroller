@@ -15,10 +15,18 @@ func Extract(req *http.Request) (*github.Event, error) {
 		return nil, err
 	}
 
-	var evt github.Event
-	if err = json.Unmarshal(b, &evt); err != nil {
+	raw := struct {
+		Repo *github.Repository `json:"repository,omitempty"`
+	}{}
+
+	if err = json.Unmarshal(b, &raw); err != nil {
 		return nil, err
 	}
 
-	return &evt, nil
+	typ := github.WebHookType(req)
+	return &github.Event{
+		RawPayload: (*json.RawMessage)(&b),
+		Repo:       raw.Repo,
+		Type:       &typ,
+	}, nil
 }
